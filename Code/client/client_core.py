@@ -11,7 +11,11 @@ class ChatClient:
     def login(self):
         while self.is_running:
             username = input("Enter your username: ")
-            self.client_socket.sendall(username.encode('utf-8'))
+            if not username:
+                continue
+            
+            self.client_socket.send(username.encode('utf-8'))
+
             if self.client_socket.recv(1024).decode() == "SUCCESS":
                 print("Login successful")
                 return True

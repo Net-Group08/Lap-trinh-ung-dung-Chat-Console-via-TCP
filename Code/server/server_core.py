@@ -16,7 +16,7 @@ class ChatServer:
 
         while True:
             conn, addr = self.server_socket.accept()
-            print(f"New connection from {addr}")
+            # print(f"New connection from {addr}")
             threading.Thread(target=self.handle_client, args=(conn, addr)).start()
 
     def process_login(self, conn):
@@ -24,12 +24,13 @@ class ChatServer:
         if not data:
             return None
         username = data.decode().strip()
+        
         with self.lock:
             if username in self.clients:
-                conn.sendall("Username already taken!".encode('utf-8'))
+                conn.send("Username already taken!".encode('utf-8'))
                 return None
             self.clients[username] = conn
-        conn.sendall("SUCCESS".encode('utf-8'))
+        conn.send("SUCCESS".encode('utf-8'))
         print(f"[+]{username} logged in")
         return username
 
