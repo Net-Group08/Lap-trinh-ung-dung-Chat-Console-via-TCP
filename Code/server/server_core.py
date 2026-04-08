@@ -36,5 +36,32 @@ class ChatServer:
 
     def handle_client(self, conn, addr):
         username = self.process_login(conn)
-        if not username:
-            conn.close()
+        if not username: return
+        
+        while True:
+            data = conn.recv(1024)
+            if not data: break
+            msg = data.decode('utf-8').strip()
+            self.process_command(msg, username, conn)
+
+    def process_command(self, msg, sender, conn):
+        if msg == "/list":
+            with self.lock: users = ", ".join(self.clients.keys())
+            conn.send(f"[SERVER] Online: {users}".encode('utf-8'))
+            
+        elif msg.startswith("/msg "):
+            parts = msg.split(' ', 2)
+            if len(parts) == 3:
+                target, content = parts[1], parts[2]
+                with self.lock:
+                    if target in self.clients:
+                        self.clients[target].send(f"\n[From {sender}]: {content}".encode('utf-8'))
+
+        elif msg.startswith("/all "):
+            parts = msg.split(' ', 1)
+            if len(parts) == 2 and parts[1].strip():
+                content = parts[1]
+                with self.lock:
+                    for user, sock in list(self.clients.items()):
+                        if user != sender:
+                            sock.send(f"\n[{sender}]: {content}".encode('utf-8'))
