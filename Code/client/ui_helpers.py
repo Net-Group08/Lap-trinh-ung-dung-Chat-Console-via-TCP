@@ -1,26 +1,12 @@
-class ConsoleUI:
+def print_help_menu(is_admin=False):
+    """In ra menu các lệnh có thể sử dụng."""
+    print("\n--- CÁC LỆNH HỖ TRỢ ---")
+    print("/list          - Xem danh sách người dùng online")
+    print("/msg <tên> <nd> - Gửi tin nhắn riêng cho một người")
+    print("/all <nd>      - Gửi tin nhắn cho tất cả mọi người")
+    print("/quit          - Thoát chương trình")
+    print("-----------------------\n")
 
-    def show_message(self, msg: str) -> None:
-        print(f"\r{msg}\n>> ", end="", flush=True)
 
-    def show_help(self, is_admin: bool = False) -> None:
-        print("\n--- CÁC LỆNH HỖ TRỢ ---")
-        print("  /list                  — Xem người online")
-        print("  /msg <tên> <nội dung>  — Nhắn riêng")
-        print("  /all <nội dung>        — Nhắn tất cả")
-        print("  /help                  — Trợ giúp từ server")
-        print("  /quit                  — Thoát")
-        if is_admin:
-            print("  [ADMIN] /kick <tên>    — Kick")
-            print("  [ADMIN] /ban  <tên>    — Ban vĩnh viễn")
-            print("  [ADMIN] /unban <tên>   — Gỡ ban")
-        print("------------------------\n")
-
-    def prompt(self, text: str = ">> ") -> str:
-        return input(text).strip()
-
-    def info(self, msg: str) -> None:
-        print(f"[*] {msg}")
-
-    def error(self, msg: str) -> None:
-        print(f"[!] {msg}")
+def print_incoming_message(msg):
+    print(f"\r{msg}\n>> ", end="", flush=True)
