@@ -10,7 +10,7 @@ class ChatClient:
 
     def login(self):
         while self.is_running:
-            username = input("Nhap username: ")
+            username = input("Input username: ")
             self.client_socket.send(username.encode('utf-8'))
             if self.client_socket.recv(1024).decode('utf-8') == "SUCCESS":
                 print("Login successful")
@@ -24,19 +24,30 @@ class ChatClient:
                 if not msg: break
                 print_incoming_message(msg)
             except: break
+        
+        print("\n[!] Connection closed by server.")
+        self.is_running = False
         os._exit(0)
 
     def start(self):
         try:
             self.client_socket.connect((HOST, PORT))
-        except: return
+        except ConnectionRefusedError:
+            print("[!] Failed to connect to the server")
+            return
 
         if self.login():
             print_help_menu(is_admin=(self.username == 'admin'))
             threading.Thread(target=self.receive_messages, daemon=True).start()
 
             while self.is_running:
-                cmd = input(">> ")
-                if cmd == "/quit": break
-                self.client_socket.send(cmd.encode('utf-8'))
-        self.client_socket.close(); os._exit(0)
+                try:
+                    cmd = input(">> ")
+                    if cmd == "/quit": break
+                    self.client_socket.send(cmd.encode('utf-8'))
+                except (KeyboardInterrupt, EOFError):
+                    break
+        self.is_running = False
+        self.client_socket.close();
+        print("\nDisconnected from server.")
+        os._exit(0)
