@@ -10,6 +10,15 @@ class ChatServer:
         self.clients = {}
         self.lock = threading.Lock()
 
+     def broadcast(self, message, sender_name=None):
+        with self.lock:
+            for username, client_socket in self.clients.items():
+                if username != sender_name:
+                    try:
+                        client_socket.send(message.encode('utf-8'))
+                    except:
+                        pass
+
     def start(self):
         self.server_socket.bind((HOST, PORT))
         self.server_socket.listen(10)
@@ -19,16 +28,6 @@ class ChatServer:
             conn, addr = self.server_socket.accept()
             # print(f"New connection from {addr}")
             threading.Thread(target=self.handle_client, args=(conn, addr)).start()
-    
-    def broadcast(self, message, sender_name=None):
-
-        with self.lock:
-            for username, client_socket in self.clients.items():
-                if username != sender_name:
-                    try:
-                        client_socket.send(message.encode('utf-8'))
-                    except:
-                        pass # Bỏ qua nếu client đã ngắt kết nối
                     
     def process_login(self, conn):
         try:
