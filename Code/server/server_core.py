@@ -1,6 +1,7 @@
 import socket
 import threading
-from config import HOST, PORT
+from config import HOST, PORT, ADMIN_PASS
+from server import ban_manager
 
 class ChatServer:
     def __init__(self):
