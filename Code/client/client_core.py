@@ -27,7 +27,6 @@ class ChatClient:
                return True
             else:
                 print(f"[SERVER] {response}")
-                #Nếu đăng nhập thất bại, không tiếp tục chạy client
                 return False
 
     def receive_messages(self):
