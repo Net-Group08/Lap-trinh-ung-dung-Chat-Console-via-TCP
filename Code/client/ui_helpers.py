@@ -6,6 +6,12 @@ def print_help_menu(is_admin=False):
     print("/all <nd>      - Gửi tin nhắn cho tất cả mọi người")
     print("/quit          - Thoát chương trình")
     print("-----------------------\n")
+    if is_admin:
+        print("--- LỆNH ADMIN ---")
+        print("/kick <tên>    - Kick một người dùng")
+        print("/ban <tên>     - Cấm một người dùng vĩnh viễn")
+        print("/unban <tên>   - Bỏ cấm một người dùng")
+        print("------------------\n")
 
 
 def print_incoming_message(msg):
