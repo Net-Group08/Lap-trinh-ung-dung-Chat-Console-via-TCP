@@ -20,19 +20,33 @@ class ChatServer:
             threading.Thread(target=self.handle_client, args=(conn, addr)).start()
 
     def process_login(self, conn):
-        data = conn.recv(1024)
-        if not data:
-            return None
-        username = data.decode().strip()
-        
-        with self.lock:
-            if username in self.clients:
-                conn.send("Username already taken!".encode('utf-8'))
+        try:
+            username = conn.recv(1024).decode('utf-8').strip()
+            if not username: return None
+
+            if ban_manager.is_banned(username):
+                conn.send("ERROR: Tài khoản của bạn đã bị cấm!".encode('utf-8'))
                 return None
-            self.clients[username] = conn
-        conn.send("SUCCESS".encode('utf-8'))
-        print(f"[+]{username} logged in")
-        return username
+            
+            if username == 'admin':
+                conn.send("REQ_PASS".encode('utf-8'))
+                password = conn.recv(1024).decode('utf-8')
+                if password != ADMIN_PASS:
+                    conn.send("ERROR: Sai mật khẩu admin!".encode('utf-8'))
+                    return None
+                
+            with self.lock:
+                if username in self.clients:
+                    conn.send("ERROR: Tên đăng nhập đã tồn tại!".encode('utf-8'))
+                    return None
+                self.clients[username] = conn
+
+            conn.send("SUCCESS".encode('utf-8'))
+            print(f"[+] {username} đã đăng nhập từ {conn.getpeername()}.")
+            self.broadcast(f"[SERVER] {username} đã tham gia phòng chat.",username)
+            return username
+        except:
+            return None
 
     def handle_client(self, conn, addr):
         username = self.process_login(conn)
