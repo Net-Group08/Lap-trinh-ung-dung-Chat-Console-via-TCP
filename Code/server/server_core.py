@@ -10,7 +10,7 @@ class ChatServer:
         self.clients = {}
         self.lock = threading.Lock()
 
-     def broadcast(self, message, sender_name=None):
+    def broadcast(self, message, sender_name=None):
         with self.lock:
             for username, client_socket in self.clients.items():
                 if username != sender_name:
