@@ -11,12 +11,24 @@ class ChatClient:
     def login(self):
         while self.is_running:
             username = input("Input username: ")
+            if not username: continue
+
             self.client_socket.send(username.encode('utf-8'))
-            if self.client_socket.recv(1024).decode('utf-8') == "SUCCESS":
-                print("Login successful")
-                self.username = username
-                return True
-            
+            response = self.client_socket.recv(1024).decode('utf-8')
+
+            if response == "REQ_PASS":
+                password = input("Nhập mật khẩu admin: ")
+                self.client_socket.send(password.encode('utf-8'))
+                response = self.client_socket.recv(1024).decode('utf-8')
+
+            if response == "SUCCESS":
+               self.username = username
+               print("\nĐăng nhập thành công!")
+               return True
+            else:
+                print(f"[SERVER] {response}")
+                return False
+
     def receive_messages(self):
         while self.is_running:
             try:
