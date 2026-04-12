@@ -20,7 +20,6 @@ class ChatServer:
                         pass
 
     def handle_client(self, conn, addr):
-        # print(f"[+] Có kết nối TCP từ {addr}")
         username = None
         try:
             username = self.process_login(conn)
@@ -30,19 +29,15 @@ class ChatServer:
                 data = conn.recv(1024)
                 if not data: break
                 msg = data.decode('utf-8').strip()
-                if msg: self.process_command(msg, username, conn)
-        except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
-            print(f"[!] Kết nối với {username if username else addr} bị ngắt đột ngột.")
-        except Exception as e:
-            print(f"[!] Lỗi trong handle_client: {e}")
+                self.process_command(msg, username, conn)
+        except (ConnectionResetError, BrokenPipeError):
+           pass # Lờ đi lỗi đứt mạng
         finally:
             if username:
                 with self.lock:
                     if username in self.clients:
                         del self.clients[username]
-                        print(f"[-] {username} đã ngắt kết nối.")
-                self.broadcast(f"[SERVER] {username} đã rời khỏi phòng chat.")
-            conn.close()
+                        conn.close()
 
     def start(self):
         self.server_socket.bind((HOST, PORT))
