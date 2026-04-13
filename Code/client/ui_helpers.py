@@ -13,6 +13,12 @@ def print_help_menu(is_admin=False):
         print("/unban <tên>   - Bỏ cấm một người dùng")
         print("------------------\n")
 
+def print_menu():
+    print("\n--- MENU ---")
+    print("1. Đăng nhập")
+    print("2. Đăng ký")
+    print("3. Thoát")
+    print("-------------\n")
 
 def print_incoming_message(msg):
     print(f"\r{msg}\n>> ", end="", flush=True)

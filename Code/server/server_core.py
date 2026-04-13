@@ -2,6 +2,7 @@ import socket
 import threading
 from config import HOST, PORT, ADMIN_PASS
 from server import ban_manager
+from server import user_service
 
 class ChatServer:
     def __init__(self):
@@ -44,20 +45,53 @@ class ChatServer:
                 self.broadcast(f"[SERVER] {username} đã rời khỏi phòng chat.")
             conn.close()
 
-    def start(self):
-        self.server_socket.bind((HOST, PORT))
-        self.server_socket.listen(10)
-        print(f"Chat server started on {HOST}:{PORT}")
-
-        while True:
-            conn, addr = self.server_socket.accept()
-            # print(f"New connection from {addr}")
-            threading.Thread(target=self.handle_client, args=(conn, addr)).start()
-                    
-    def process_login(self, conn):
+    def handle_registration(self, conn):
         try:
             username = conn.recv(1024).decode('utf-8').strip()
-            if not username: return None
+            if not username:
+                conn.send("ERROR: Tên đăng nhập không hợp lệ!".encode('utf-8'))
+                return None
+
+            with self.lock:
+                if username in self.clients:
+                    conn.send("ERROR: Tên đăng nhập đã được sử dụng!".encode('utf-8'))
+                    return None
+
+            if ban_manager.is_banned(username):
+                conn.send("ERROR: Tài khoản này đã bị cấm!".encode('utf-8'))
+                return None
+
+            if username == 'admin':
+                conn.send("ERROR: Không thể đăng ký với tên 'admin'!".encode('utf-8'))
+                return None
+
+            conn.send("USERNAME_OK".encode('utf-8'))
+            
+            password = conn.recv(1024).decode('utf-8').strip()
+            if not password:
+                conn.send("ERROR: Mật khẩu không hợp lệ!".encode('utf-8'))
+                return None
+
+            success, message = user_service.register_user(username, password)
+            
+            if success:
+                conn.send("SUCCESS".encode('utf-8'))
+                print(f"[+] {username} đã đăng ký thành công.")
+                return None
+            else:
+                conn.send(f"ERROR: {message}".encode('utf-8'))
+                return None
+        except Exception as e:
+            print(f"[!] Lỗi trong quá trình đăng ký: {e}")
+            conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng ký!".encode('utf-8'))
+            return None
+        
+    def handle_login(self, conn):
+        try:
+            username = conn.recv(1024).decode('utf-8').strip()
+            if not username:
+                conn.send("ERROR: Tên đăng nhập không hợp lệ!".encode('utf-8'))
+                return None
 
             if ban_manager.is_banned(username):
                 conn.send("ERROR: Tài khoản của bạn đã bị cấm!".encode('utf-8'))
@@ -69,7 +103,15 @@ class ChatServer:
                 if password != ADMIN_PASS:
                     conn.send("ERROR: Sai mật khẩu admin!".encode('utf-8'))
                     return None
-                
+            else:
+                conn.send("REQ_PASS".encode('utf-8'))
+                password = conn.recv(1024).decode('utf-8').strip()
+
+                success, message = user_service.login_user(username, password)
+                if not success:
+                    conn.send(f"ERROR: {message}".encode('utf-8'))
+                    return None
+
             with self.lock:
                 if username in self.clients:
                     conn.send("ERROR: Tên đăng nhập đã tồn tại!".encode('utf-8'))
@@ -78,8 +120,24 @@ class ChatServer:
 
             conn.send("SUCCESS".encode('utf-8'))
             print(f"[+] {username} đã đăng nhập từ {conn.getpeername()}.")
-            self.broadcast(f"[SERVER] {username} đã tham gia phòng chat.",username)
+            self.broadcast(f"[SERVER] {username} đã tham gia phòng chat.", username)
             return username
+        except Exception as e:
+            print(f"[!] Lỗi trong quá trình đăng nhập: {e}")
+            conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng nhập!".encode('utf-8'))
+            return None
+                    
+    def process_login(self, conn):
+        try:
+            request_type = conn.recv(1024).decode('utf-8').strip()
+            
+            if request_type == "REGISTER":
+                return self.handle_registration(conn)
+            elif request_type == "LOGIN":
+                return self.handle_login(conn)
+            else:
+                conn.send("ERROR: Loại yêu cầu không hợp lệ!".encode('utf-8'))
+                return None
         except:
             return None
 
@@ -100,10 +158,7 @@ class ChatServer:
             parts = msg.split(' ', 1)
             if len(parts) == 2 and parts[1].strip():
                 content = parts[1]
-                with self.lock:
-                    for user, sock in list(self.clients.items()):
-                        if user != sender:
-                            self.broadcast(f"\n[{sender}]: {content}".encode('utf-8'))
+                self.broadcast(f"\n[{sender}]: {content}", sender_name=sender)
         elif msg.startswith("/kick ") and sender == 'admin':
             target = msg.split(' ', 1)[1]
             with self.lock:
@@ -128,4 +183,16 @@ class ChatServer:
             conn.send(f"[ADMIN] Đã bỏ cấm {target}.".encode('utf-8'))
         else:
             conn.send("[SERVER] Lệnh không hợp lệ hoặc bạn không có quyền.".encode('utf-8'))
+
+    def start(self):
+        self.server_socket.bind((HOST, PORT))
+        self.server_socket.listen(50)
+        print(f"Chat server started on {HOST}:{PORT}")
+
+        while True:
+            try:
+                conn, addr = self.server_socket.accept()
+                threading.Thread(target=self.handle_client, args=(conn, addr)).start()
+            except OSError:
+                break
         

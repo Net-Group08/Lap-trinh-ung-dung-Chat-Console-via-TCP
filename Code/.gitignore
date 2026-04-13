@@ -2,11 +2,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+config.py
+test_*.py
+
 venv/
 env/
 .env
 
 bans.txt
+out.txt
 *.log
 
 .DS_Store
