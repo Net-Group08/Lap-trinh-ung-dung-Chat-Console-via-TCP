@@ -33,7 +33,7 @@ class ChatServer:
                 msg = data.decode('utf-8').strip()
                 if msg: self.process_command(msg, username, conn)
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
-            print(f"[!] Kết nối với {username if username else addr} bị ngắt đột ngột.")
+            print(f"[!] Ngắt kết nối với {username if username else addr}.")
         except Exception as e:
             print(f"[!] Lỗi trong handle_client: {e}")
         finally:

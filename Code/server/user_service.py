@@ -18,7 +18,7 @@ def receive_temp_password(username):
         return temporary_memory.get(username, None)
         
 def register_user( username, plain_password):
-    print(f"\nAttempting to register user: {username}")
+    print(f"\n[~] Attempting to register user: {username}")
 
     is_strong, msg = security_utils.checkpassword_strength(plain_password)
     if not is_strong:
@@ -35,7 +35,7 @@ def register_user( username, plain_password):
         query = "INSERT INTO account_user (username, password) VALUES (%s, %s)"
         cursor.execute(query, (username, hashed_password))
         conn.commit()
-        print(f"User {username} registered successfully.")
+        print(f"[+] User {username} registered successfully.")
         return True, "User registered successfully."
     except mysql.connector.IntegrityError as err:
         print(f"[-] Username '{username}' already taken in DB: {err}")
@@ -56,7 +56,7 @@ def register_user( username, plain_password):
             conn.close()
     
 def login_user( username, plain_password):
-    print(f"\nAttempting to log in user: {username}")
+    print(f"\n[~] Attempting to log in user: {username}")
 
     conn = None
     cursor = None

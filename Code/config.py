@@ -1,11 +1,11 @@
-from mysql.connector import pooling
+# from mysql.connector import pooling
 
 HOST = "127.0.0.1"
 PORT = 5555
 
 ADMIN_PASS = 'adminpass'
 
-BANS_FILE = 'bans.txt'
+# BANS_FILE = 'bans.txt'
 
 DB_CONFIG = {
     'host': '127.0.0.1',
