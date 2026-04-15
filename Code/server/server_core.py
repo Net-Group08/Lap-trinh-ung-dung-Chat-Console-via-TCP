@@ -1,5 +1,7 @@
 import socket
 import threading
+import mysql.connector
+from config import DB_CONFIG
 from config import HOST, PORT, ADMIN_PASS
 from server import ban_manager
 from server import user_service
@@ -20,12 +22,37 @@ class ChatServer:
                     except:
                         pass
 
+    def check_user_exists(self, username):
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG,connect_timeout=2)
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM account_user WHERE username = %s"
+            cursor.execute(query, (username,))
+            result = cursor.fetchone()
+            return result[0] > 0
+        except mysql.connector.Error as err:
+            print(f"[-] DB error while checking existence of user '{username}': {err}")
+            return False
+        except Exception as e:
+            print(f"[-] Unexpected error while checking existence of user '{username}': {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn and conn.is_connected():
+                conn.close()
+
     def handle_client(self, conn, addr):
         # print(f"[+] Có kết nối TCP từ {addr}")
         username = None
+        req_type = None
         try:
-            username = self.process_login(conn)
-            if not username: return
+            while not req_type:
+                req_type = self.process_login(conn)
+                if req_type == "DISCONNECT":
+                    return
             
             while True:
                 data = conn.recv(1024)
@@ -49,12 +76,11 @@ class ChatServer:
         try:
             username = conn.recv(1024).decode('utf-8').strip()
             if not username:
-                conn.send("ERROR: Tên đăng nhập không hợp lệ!".encode('utf-8'))
-                return None
-
+                return "DISCONNECT"
+            
             with self.lock:
-                if username in self.clients:
-                    conn.send("ERROR: Tên đăng nhập đã được sử dụng!".encode('utf-8'))
+                if self.check_user_exists(username):
+                    conn.send("ERROR: Tên đăng nhập đã tồn tại!".encode('utf-8'))
                     return None
 
             if ban_manager.is_banned(username):
@@ -69,8 +95,7 @@ class ChatServer:
             
             password = conn.recv(1024).decode('utf-8').strip()
             if not password:
-                conn.send("ERROR: Mật khẩu không hợp lệ!".encode('utf-8'))
-                return None
+                return "DISCONNECT"
 
             success, message = user_service.register_user(username, password)
             
@@ -83,15 +108,21 @@ class ChatServer:
                 return None
         except Exception as e:
             print(f"[!] Lỗi trong quá trình đăng ký: {e}")
-            conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng ký!".encode('utf-8'))
-            return None
+            try:
+                conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng ký!".encode('utf-8'))
+            except: pass
+            return "DISCONNECT"
         
     def handle_login(self, conn):
         try:
             username = conn.recv(1024).decode('utf-8').strip()
             if not username:
-                conn.send("ERROR: Tên đăng nhập không hợp lệ!".encode('utf-8'))
-                return None
+                return "DISCONNECT"
+            
+            with self.lock:
+                if self.clients.get(username):
+                    conn.send("ERROR: Tên đăng nhập đã tồn tại!".encode('utf-8'))
+                    return None
 
             if ban_manager.is_banned(username):
                 conn.send("ERROR: Tài khoản của bạn đã bị cấm!".encode('utf-8'))
@@ -100,12 +131,16 @@ class ChatServer:
             if username == 'admin':
                 conn.send("REQ_PASS".encode('utf-8'))
                 password = conn.recv(1024).decode('utf-8')
+                if not password:
+                    return "DISCONNECT"
                 if password != ADMIN_PASS:
                     conn.send("ERROR: Sai mật khẩu admin!".encode('utf-8'))
                     return None
             else:
                 conn.send("REQ_PASS".encode('utf-8'))
                 password = conn.recv(1024).decode('utf-8').strip()
+                if not password:
+                    return "DISCONNECT"
 
                 success, message = user_service.login_user(username, password)
                 if not success:
@@ -124,12 +159,16 @@ class ChatServer:
             return username
         except Exception as e:
             print(f"[!] Lỗi trong quá trình đăng nhập: {e}")
-            conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng nhập!".encode('utf-8'))
-            return None
+            try:
+                conn.send("ERROR: Đã xảy ra lỗi trong quá trình đăng nhập!".encode('utf-8'))
+            except: pass
+            return "DISCONNECT"
                     
     def process_login(self, conn):
         try:
             request_type = conn.recv(1024).decode('utf-8').strip()
+            if not request_type:
+                return "DISCONNECT"
             
             if request_type == "REGISTER":
                 return self.handle_registration(conn)
@@ -139,7 +178,7 @@ class ChatServer:
                 conn.send("ERROR: Loại yêu cầu không hợp lệ!".encode('utf-8'))
                 return None
         except:
-            return None
+            return "DISCONNECT"
 
     def process_command(self, msg, sender, conn):
         if msg == "/list":

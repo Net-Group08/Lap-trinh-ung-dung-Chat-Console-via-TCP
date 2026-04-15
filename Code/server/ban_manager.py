@@ -41,7 +41,7 @@ def ban_user(username):
             query = "UPDATE account_user SET banned = TRUE WHERE username = %s"
             cursor.execute(query, (username,))
             conn.commit()
-            print(f"User {username} banned successfully in DB.")
+            print(f"[~] User {username} banned successfully in DB.")
         except mysql.connector.Error as err:
             print(f"[-] DB error while banning user '{username}': {err}")
         except Exception as e:
@@ -69,7 +69,7 @@ def unban_user(username):
             query = "UPDATE account_user SET banned = FALSE WHERE username = %s"
             cursor.execute(query, (username,))
             conn.commit()
-            print(f"User {username} unbanned successfully in DB.")
+            print(f"[~] User {username} unbanned successfully in DB.")
         except mysql.connector.Error as err:
             print(f"[-] DB error while unbanning user '{username}': {err}")
         except Exception as e:

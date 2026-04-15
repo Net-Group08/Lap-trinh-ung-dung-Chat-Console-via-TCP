@@ -8,18 +8,18 @@ class ChatClient:
         self.is_running = True
         self.username = None
 
-    def show_auth_menu(self):
-        while True:
-            print_menu()            
-            choice = input("Chọn tùy chọn (1-3): ").strip()
-            if choice == "1":
-                return "LOGIN"
-            elif choice == "2":
-                return "REGISTER"
-            elif choice == "3":
-                return "QUIT"
-            else:
-                print("[!] Tùy chọn không hợp lệ, vui lòng thử lại.")
+    def reconnect(self):
+        try:
+            self.client_socket.close()
+        except:
+            pass
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.client_socket.connect((HOST, PORT))
+            return True
+        except:
+            print("[!] Không thể kết nối lại đến server")
+            return False
 
     def handle_login(self):
         while self.is_running:
@@ -42,11 +42,11 @@ class ChatClient:
                    print("\nĐăng nhập thành công!")
                    return True
                 else:
-                    print(f"[SERVER] {response}")
-                    print("Vui lòng thử lại.\n")
+                    print(f"[SERVER] {response}\n")
                     return False
             except Exception as e:
-                print(f"[!] Lỗi kết nối: {e}")
+                print(f"[!] Mất kết nối với máy chủ, đang kết nối lại...")
+                # self.reconnect()
                 return False
     
     def handle_register(self):
@@ -66,45 +66,33 @@ class ChatClient:
                     response = self.client_socket.recv(1024).decode('utf-8')
 
                     if response == "SUCCESS":
-                        print("\nĐăng ký thành công! Vui lòng kết nối lại để đăng nhập.")
-                        self.client_socket.close()
-                        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        self.client_socket.connect((HOST, PORT))
+                        print("\nĐăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.")
                         return True
                     else:
-                        print(f"[SERVER] {response}")
-                        print("Vui lòng thử lại.\n")
+                        print(f"[SERVER] {response}\n")
                         return False
                 else:
-                    print(f"[SERVER] {response}")
-                    print("Vui lòng thử lại.\n")
+                    print(f"[SERVER] {response}\n")
                     return False
             except Exception as e:
-                print(f"[!] Lỗi: {e}")
-                try:
-                    self.client_socket.close()
-                except:
-                    pass
-                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                try:
-                    self.client_socket.connect((HOST, PORT))
-                except:
-                    print("[!] Không thể kết nối lại đến server")
-                    return False
+                print(f"[!] Mất kết nối với máy chủ, đang kết nối lại...")
+                # self.reconnect()
                 return False
 
     def login(self):
         while self.is_running:
-            choice = self.show_auth_menu()
-            
-            if choice == "LOGIN":
+            print_menu()
+            choice = input("Chọn tùy chọn (1-3): ").strip()
+            if choice == "LOGIN" or choice == "1":
                 if self.handle_login():
                     return True
-            elif choice == "REGISTER":
+            elif choice == "REGISTER" or choice == "2":
                 if self.handle_register():
                     continue
-            elif choice == "QUIT":
+            elif choice == "QUIT" or choice == "3":
                 return False
+            else:
+                print("[!] Tùy chọn không hợp lệ, vui lòng thử lại.")
 
     def receive_messages(self):
         while self.is_running:
@@ -113,8 +101,7 @@ class ChatClient:
                 if not msg: break
                 print_incoming_message(msg)
             except: break
-        
-        print("\n[!] Connection closed by server.")
+
         self.is_running = False
         os._exit(0)
 
@@ -137,6 +124,5 @@ class ChatClient:
                 except (KeyboardInterrupt, EOFError):
                     break
         self.is_running = False
-        self.client_socket.close();
-        print("\nDisconnected from server.")
+        print("\nNgắt kết nối với server.")
         os._exit(0)
