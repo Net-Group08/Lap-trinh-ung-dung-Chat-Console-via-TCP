@@ -45,7 +45,7 @@ def register_user( username, plain_password):
         if success:
             print(f"[~] User registered in memory. DB error: {err}")
         else:
-            print(f"[-] Registration rejected (in-memory fallback): {msg}")
+            print("[-] Registration rejected (in-memory fallback).")
         return success, msg
     except Exception as e:
         return False, f"Database connection error: {e}"
