@@ -222,7 +222,7 @@ PORT = 8888  # Hoặc cổng khác
 
 - **user_service.py**:
   - Xử lí login/register giữa hệ thống và database
-
+  - Kiểm tra tài khoản đã tồn tại trong database chưa
 ## Bảo Mật
 
 - Mật khẩu admin được lưu trong `config.py` (xem xét lưu vào environment variable)
