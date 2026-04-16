@@ -16,6 +16,28 @@ def store_temp_password(username, hashed_password):
 def receive_temp_password(username):
     with db_lock:
         return temporary_memory.get(username, None)
+    
+def check_user_exists(username):
+        conn = None
+        cursor = None
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG,connect_timeout=2)
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM account_user WHERE username = %s"
+            cursor.execute(query, (username,))
+            result = cursor.fetchone()
+            return result[0] > 0
+        except mysql.connector.Error as err:
+            print(f"[-] DB error while checking existence of user '{username}': {err}")
+            return False
+        except Exception as e:
+            print(f"[-] Unexpected error while checking existence of user '{username}': {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn and conn.is_connected():
+                conn.close()
         
 def register_user( username, plain_password):
     print(f"[~] Attempting to register user: {username}")
