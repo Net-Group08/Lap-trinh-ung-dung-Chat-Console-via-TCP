@@ -1,7 +1,5 @@
 import socket
 import threading
-import mysql.connector
-from config import DB_CONFIG
 from config import HOST, PORT, ADMIN_PASS
 from server import ban_manager
 from server import user_service
@@ -21,28 +19,6 @@ class ChatServer:
                         client_socket.send(message.encode('utf-8'))
                     except:
                         pass
-
-    def check_user_exists(self, username):
-        conn = None
-        cursor = None
-        try:
-            conn = mysql.connector.connect(**DB_CONFIG,connect_timeout=2)
-            cursor = conn.cursor()
-            query = "SELECT COUNT(*) FROM account_user WHERE username = %s"
-            cursor.execute(query, (username,))
-            result = cursor.fetchone()
-            return result[0] > 0
-        except mysql.connector.Error as err:
-            print(f"[-] DB error while checking existence of user '{username}': {err}")
-            return False
-        except Exception as e:
-            print(f"[-] Unexpected error while checking existence of user '{username}': {e}")
-            return False
-        finally:
-            if cursor:
-                cursor.close()
-            if conn and conn.is_connected():
-                conn.close()
 
     def handle_client(self, conn, addr):
         # print(f"[+] Có kết nối TCP từ {addr}")
@@ -80,7 +56,7 @@ class ChatServer:
                 return "DISCONNECT"
             
             with self.lock:
-                if self.check_user_exists(username):
+                if user_service.check_user_exists(username):
                     conn.send("ERROR: Tên đăng nhập đã tồn tại!".encode('utf-8'))
                     return None
 
