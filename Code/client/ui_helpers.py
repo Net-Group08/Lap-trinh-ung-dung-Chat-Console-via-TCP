@@ -1,3 +1,29 @@
+import sys
+import msvcrt
+
+def masked_input(prompt="Mật khẩu: "):
+    """Nhập mật khẩu, mỗi ký tự hiển thị dấu *. Hỗ trợ Backspace."""
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+    password = []
+    while True:
+        ch = msvcrt.getwch()
+        if ch in ('\r', '\n'):  # Enter
+            sys.stdout.write('\n')
+            sys.stdout.flush()
+            return ''.join(password)
+        elif ch == '\x08':  # Backspace
+            if password:
+                password.pop()
+                sys.stdout.write('\b \b')
+                sys.stdout.flush()
+        elif ch == '\x03':  # Ctrl+C
+            raise KeyboardInterrupt
+        else:
+            password.append(ch)
+            sys.stdout.write('*')
+            sys.stdout.flush()
+
 def print_help_menu(is_admin=False):
     """In ra menu các lệnh có thể sử dụng."""
     print("\n--- CÁC LỆNH HỖ TRỢ ---")

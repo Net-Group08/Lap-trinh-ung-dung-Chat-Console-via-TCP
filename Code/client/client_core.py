@@ -1,7 +1,7 @@
 import socket, threading, os
-import getpass
+
 from config import HOST, PORT
-from client.ui_helpers import print_help_menu, print_incoming_message, print_menu
+from client.ui_helpers import print_help_menu, print_incoming_message, print_menu, masked_input
 
 class ChatClient:
     def __init__(self):
@@ -34,7 +34,7 @@ class ChatClient:
                 response = self.client_socket.recv(1024).decode('utf-8')
 
                 if response == "REQ_PASS":
-                    password = getpass.getpass("Mật khẩu: ")
+                    password = masked_input("Mật khẩu: ")
                     self.client_socket.send(password.encode('utf-8'))
                     response = self.client_socket.recv(1024).decode('utf-8')
 
