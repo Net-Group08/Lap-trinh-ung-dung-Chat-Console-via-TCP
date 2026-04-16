@@ -53,7 +53,8 @@ class ChatServer:
                 req_type = self.process_login(conn)
                 if req_type == "DISCONNECT":
                     return
-            
+            username = req_type
+            # print(f"[+] {username}")
             while True:
                 data = conn.recv(1024)
                 if not data: break
@@ -101,7 +102,6 @@ class ChatServer:
             
             if success:
                 conn.send("SUCCESS".encode('utf-8'))
-                print(f"[+] {username} đã đăng ký thành công.")
                 return None
             else:
                 conn.send(f"ERROR: {message}".encode('utf-8'))
@@ -234,4 +234,3 @@ class ChatServer:
                 threading.Thread(target=self.handle_client, args=(conn, addr)).start()
             except OSError:
                 break
-        

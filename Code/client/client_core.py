@@ -46,7 +46,7 @@ class ChatClient:
                     return False
             except Exception as e:
                 print(f"[!] Mất kết nối với máy chủ, đang kết nối lại...")
-                # self.reconnect()
+                self.reconnect()
                 return False
     
     def handle_register(self):
@@ -76,7 +76,7 @@ class ChatClient:
                     return False
             except Exception as e:
                 print(f"[!] Mất kết nối với máy chủ, đang kết nối lại...")
-                # self.reconnect()
+                self.reconnect()
                 return False
 
     def login(self):
