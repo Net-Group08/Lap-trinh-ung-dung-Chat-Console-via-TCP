@@ -16,7 +16,7 @@ Một ứng dụng chat sử dụng giao thức TCP, cho phép nhiều người 
 
 ### Tính Năng Chung
 - Kết nối TCP giữa client và server
-- Authentication/Đăng nhập người dùng
+- Login/Register người dùng
 - Chat công khai và chat riêng
 - Xem danh sách người dùng online
 - Hỗ trợ nhiều client kết nối đồng thời
@@ -25,7 +25,7 @@ Một ứng dụng chat sử dụng giao thức TCP, cho phép nhiều người 
 - Đăng nhập Admin với mật khẩu bảo vệ
 - Kick người dùng khỏi phòng chat
 - Ban (cấm) người dùng vĩnh viễn
-- Quản lý danh sách ban qua file `bans.txt`
+- Quản lý ban/unban
 
 ## Yêu Cầu Hệ Thống
 
@@ -51,22 +51,27 @@ Dự án sử dụng các module chuẩn của Python.
 ## Cấu Trúc Dự Án
 
 ```
-Chat-tcp/
-├── README.md                 # Tệp này - Hướng dẫn dự án
-├── config.py                 # File cấu hình chung
-├── bans.txt                  # Danh sách người dùng bị cấm
-├── start_server.py           # Điểm vào của server
-├── start_client.py           # Điểm vào của client
-│
-├── server/                   # Thư mục server
-│   ├── __init__.py
-│   ├── server_core.py        # Logic xử lý server chính
-│   └── ban_manager.py        # Quản lý hệ thống ban
-│
-└── client/                   # Thư mục client
-    ├── __init__.py
-    ├── client_core.py        # Logic xử lý client chính
-    └── ui_helpers.py         # Công cụ hỗ trợ giao diện
+LAP-TRINH-UNG-DUNG-CHAT-CONSOLE-VIA-TCP/
+    ├──DOCX
+    ├──PPTX
+    ├──Extra
+    ├── README.md                 # Tệp này - Hướng dẫn dự án
+    ├──Code/
+        ├── config.py                 # File cấu hình chung
+        ├── start_server.py           # Điểm vào của server
+        ├── start_client.py           # Điểm vào của client
+        │
+        ├── server/                   # Thư mục server
+        │   ├── __init__.py
+        │   ├── server_core.py        # Logic xử lý server chính
+        │   ├── security_utils.py     # Xử lý password, dữ liệu
+        │   ├── user_service.py       # Xử lý login/register
+        │   └── ban_manager.py        # Quản lý hệ thống ban
+        │
+        └── client/                   # Thư mục client
+            ├── __init__.py
+            ├── client_core.py        # Logic xử lý client chính
+            └── ui_helpers.py         # Công cụ hỗ trợ giao diện
 ```
 
 ## Hướng Dẫn Sử Dụng
@@ -122,6 +127,7 @@ Nhập mật khẩu admin: adminpass
 --- Lệnh Admin ---
 /kick <tên>    - Đuổi một người dùng khỏi phòng chat
 /ban <tên>     - Cấm một người dùng vĩnh viễn
+/unban <tên>   - Gỡ cấm cho người dùng
 ```
 
 ## Các Lệnh Hỗ Trợ
@@ -152,6 +158,9 @@ Nhập mật khẩu admin: adminpass
 
 >> /ban john
 [ADMIN] Đã cấm vĩnh viễn john.
+
+>> /unban john
+[ADMIN] Đã bỏ cấm john.
 ```
 
 ## Cấu Hình
@@ -166,8 +175,15 @@ PORT = 5555         # Cổng mà Server sẽ lắng nghe
 # Cấu hình Admin
 ADMIN_PASS = 'adminpass'  # Mật khẩu để đăng nhập với quyền admin
 
-# Cấu hình file
-BANS_FILE = 'bans.txt'    # Tên file lưu danh sách người dùng bị cấm
+# Cấu hình Database
+DB_CONFIG = {
+    'host': 'example',
+    'port': 'example',
+    'user': 'example',
+    'password': 'example',
+    'database': 'database_name'
+}
+
 ```
 
 ### Thay Đổi Cổng Server
@@ -191,19 +207,28 @@ PORT = 8888  # Hoặc cổng khác
   - Sử dụng threading để nhận tin nhắn không chặn
   
 - **ban_manager.py**: Quản lý hệ thống ban
-  - Kiểm tra xem user có bị cấm không
-  - Thêm user vào danh sách cấm
-  - Đảm bảo file `bans.txt` luôn tồn tại
+  - Kiểm tra xem user có bị cấm từ database không
+  - Đánh dấu banned trên database
+  - Gỡ banned cho user
   
 - **ui_helpers.py**: 
   - In menu lệnh
   - In tin nhắn đến mà không xáo trộn dòng input
 
+- **security_utils.py**:
+  - Xử lý password đầu vào
+  - Băm và mã hóa password
+  - Verify password
+
+- **user_service.py**:
+  - Xử lí login/register giữa hệ thống và database
+
 ## Bảo Mật
 
 - Mật khẩu admin được lưu trong `config.py` (xem xét lưu vào environment variable)
-- Danh sách ban được lưu trong file `bans.txt` (dễ dàng quản lý)
+- Danh sách ban được lưu và đánh dấu banned trong database (dễ dàng quản lý)
 - Sử dụng threading locks để bảo vệ dữ liệu khi có nhiều client truy cập đồng thời
+- Băm và mã hóa mật khẩu với Bcrypt
 
 ## Xử Lý Lỗi
 
