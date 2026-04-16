@@ -22,7 +22,7 @@ def register_user( username, plain_password):
 
     is_strong, msg = security_utils.checkpassword_strength(plain_password)
     if not is_strong:
-        print(f"[-] Password does not meet strength requirements: {msg}")
+        print("[-] Password does not meet strength requirements.")
         return False, msg
     
     hashed_password = security_utils.hash_password(plain_password).decode('utf-8')
