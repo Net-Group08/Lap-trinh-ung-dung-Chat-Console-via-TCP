@@ -201,8 +201,8 @@ class ChatServer:
 
     def start(self):
         self.server_socket.bind((HOST, PORT))
-        self.server_socket.listen(50)
-        print(f"Chat server started on {HOST}:{PORT}")
+        self.server_socket.listen(100)
+        print(f"[*] Chat server started on {HOST}:{PORT}")
 
         while True:
             try:

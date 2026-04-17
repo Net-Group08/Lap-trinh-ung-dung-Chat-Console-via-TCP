@@ -8,16 +8,16 @@ def masked_input(prompt="Mật khẩu: "):
     password = []
     while True:
         ch = msvcrt.getwch()
-        if ch in ('\r', '\n'):  # Enter
+        if ch in ('\r', '\n'):  
             sys.stdout.write('\n')
             sys.stdout.flush()
             return ''.join(password)
-        elif ch == '\x08':  # Backspace
+        elif ch == '\x08':  
             if password:
                 password.pop()
                 sys.stdout.write('\b \b')
                 sys.stdout.flush()
-        elif ch == '\x03':  # Ctrl+C
+        elif ch == '\x03':  
             raise KeyboardInterrupt
         else:
             password.append(ch)
