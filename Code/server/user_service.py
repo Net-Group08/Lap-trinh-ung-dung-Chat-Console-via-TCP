@@ -107,3 +107,23 @@ def login_user( username, plain_password):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+def history_log(username, action):
+    conn = None
+    cursor = None
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG,connect_timeout=2)
+        cursor = conn.cursor()
+        query = "INSERT INTO history_log (username, action) VALUES (%s, %s)"
+        cursor.execute(query, (username, action))
+        conn.commit()
+    except mysql.connector.Error as err:
+        print(f"[-] DB error while logging history for user '{username}': {err}")
+    except Exception as e:
+        print(f"[-] Unexpected error while logging history for user '{username}': {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
