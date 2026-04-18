@@ -202,14 +202,14 @@ class ChatServer:
                 with self.lock:
                     if target in self.clients:
                         self.clients[target].send("[SERVER] Bạn đã bị admin cấm vĩnh viễn!".encode('utf-8'))
-                        user_service.history_log(target, f"/BAN {target}")
+                        user_service.history_log(sender, f"/BAN {target}")
                         self.clients[target].close()
             else: conn.send("[ADMIN] Không thể tự cấm chính mình.".encode('utf-8'))
         elif msg.startswith("/unban ") and sender == 'admin':
             target = msg.split(' ', 1)[1]
             ban_manager.unban_user(target)
             conn.send(f"[ADMIN] Đã bỏ cấm {target}.".encode('utf-8'))
-            user_service.history_log(target, f"/UNBAN {target}")
+            user_service.history_log(sender, f"/UNBAN {target}")
         else:
             conn.send("[SERVER] Lệnh không hợp lệ hoặc bạn không có quyền.".encode('utf-8'))
 
