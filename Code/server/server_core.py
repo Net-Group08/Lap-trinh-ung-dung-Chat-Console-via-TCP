@@ -47,6 +47,7 @@ class ChatServer:
                         del self.clients[username]
                         print(f"[-] {username} đã ngắt kết nối.")
                 self.broadcast(f"[SERVER] {username} đã rời khỏi phòng chat.")
+                user_service.history_log(username, "/LOGOUT")
             conn.close()
 
     def handle_registration(self, conn):
@@ -78,7 +79,7 @@ class ChatServer:
             
             if success:
                 conn.send("SUCCESS".encode('utf-8'))
-                user_service.history_log(username, "REGISTER")
+                user_service.history_log(username, "/REGISTER")
                 return None
             else:
                 conn.send(f"ERROR: {message}".encode('utf-8'))
@@ -133,7 +134,7 @@ class ChatServer:
             conn.send("SUCCESS".encode('utf-8'))
             print(f"[+] {username} đã đăng nhập từ {conn.getpeername()}.")
             self.broadcast(f"[SERVER] {username} đã tham gia phòng chat.", username)
-            user_service.history_log(username, "LOGIN")
+            user_service.history_log(username, "/LOGIN")
             return username
         except Exception as e:
             print(f"[!] Lỗi trong quá trình đăng nhập: {e}")
@@ -191,7 +192,7 @@ class ChatServer:
                     self.clients[target].send("[SERVER] Bạn đã bị admin kick!".encode('utf-8'))
                     self.clients[target].close()
                     conn.send(f"[ADMIN] Đã kick {target}.".encode('utf-8'))
-                    user_service.history_log(target, f"/KICK {sender}")
+                    user_service.history_log(sender, f"/KICK {target}")
                 else: conn.send(f"[ADMIN] Không tìm thấy hoặc không thể kick '{target}'.".encode('utf-8'))
         elif msg.startswith("/ban ") and sender == 'admin':
             target = msg.split(' ', 1)[1]
@@ -201,14 +202,14 @@ class ChatServer:
                 with self.lock:
                     if target in self.clients:
                         self.clients[target].send("[SERVER] Bạn đã bị admin cấm vĩnh viễn!".encode('utf-8'))
-                        user_service.history_log(target, f"/BAN {sender}")
+                        user_service.history_log(target, f"/BAN {target}")
                         self.clients[target].close()
             else: conn.send("[ADMIN] Không thể tự cấm chính mình.".encode('utf-8'))
         elif msg.startswith("/unban ") and sender == 'admin':
             target = msg.split(' ', 1)[1]
             ban_manager.unban_user(target)
             conn.send(f"[ADMIN] Đã bỏ cấm {target}.".encode('utf-8'))
-            user_service.history_log(target, f"/UNBAN {sender}")
+            user_service.history_log(target, f"/UNBAN {target}")
         else:
             conn.send("[SERVER] Lệnh không hợp lệ hoặc bạn không có quyền.".encode('utf-8'))
 
